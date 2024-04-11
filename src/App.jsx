@@ -7,7 +7,7 @@ import Editor from './components/Editor'
 
 export default function App() {
 	const [notes, setNotes] = useState(() => JSON.parse(localStorage.getItem('notes')) || [])
-	const [currentNoteId, setCurrentNoteId] = useState((notes[0] && notes[0].id) || '')
+	const [currentNoteId, setCurrentNoteId] = useState(notes[0]?.id || '')
 
 	function createNewNote() {
 		const newNote = {
@@ -41,13 +41,10 @@ export default function App() {
 		setNotes((oldNotes) => oldNotes.filter((note) => note.id != noteID))
 	}
 
-	function findCurrentNote() {
-		return (
-			notes.find((note) => {
-				return note.id === currentNoteId
-			}) || notes[0]
-		)
-	}
+	const currentNote =
+		notes.find((note) => {
+			return note.id === currentNoteId
+		}) || notes[0]
 
 	useEffect(() => {
 		localStorage.setItem('notes', JSON.stringify(notes))
@@ -57,8 +54,8 @@ export default function App() {
 		<main>
 			{notes.length > 0 ? (
 				<Split sizes={[30, 70]} direction="horizontal" className="split">
-					<Sidebar notes={notes} currentNote={findCurrentNote()} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
-					{currentNoteId && notes.length > 0 && <Editor currentNote={findCurrentNote()} updateNote={updateNote} />}
+					<Sidebar notes={notes} currentNote={currentNote} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
+					{currentNoteId && notes.length > 0 && <Editor currentNote={currentNote} updateNote={updateNote} />}
 				</Split>
 			) : (
 				<div className="no-notes">
