@@ -8,7 +8,9 @@ import { db, notesCollection } from './firebase'
 
 export default function App() {
 	const [notes, setNotes] = useState([])
-	const [currentNoteId, setCurrentNoteId] = useState(notes[0]?.id || '')
+	const [currentNoteId, setCurrentNoteId] = useState('')
+
+	console.log(currentNoteId)
 
 	async function createNewNote() {
 		const newNote = {
@@ -59,12 +61,19 @@ export default function App() {
 		return unsubscribe
 	}, [])
 
+	useEffect(() => {
+		if (!currentNoteId) {
+			setCurrentNoteId(notes[0]?.id)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [notes])
+
 	return (
 		<main>
 			{notes.length > 0 ? (
 				<Split sizes={[30, 70]} direction="horizontal" className="split">
 					<Sidebar notes={notes} currentNote={currentNote} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
-					{currentNoteId && notes.length > 0 && <Editor currentNote={currentNote} updateNote={updateNote} />}
+					<Editor currentNote={currentNote} updateNote={updateNote} />
 				</Split>
 			) : (
 				<div className="no-notes">
