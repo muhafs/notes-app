@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Split from 'react-split'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
-import { addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'
+import { addDoc, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db, notesCollection } from './firebase'
 
 export default function App() {
@@ -13,29 +13,19 @@ export default function App() {
 	console.log(currentNoteId)
 
 	async function createNewNote() {
+		const now = Date.now()
 		const newNote = {
 			body: "# Type your markdown note's title here",
+			createdAt: now,
+			updatedAt: now,
 		}
 		const noteRef = await addDoc(notesCollection, newNote)
 		setCurrentNoteId(noteRef.id)
 	}
 
-	function updateNote(text) {
-		setNotes((oldNotes) => {
-			let newArray = []
-
-			for (let i = 0; i < oldNotes.length; i++) {
-				const note = oldNotes[i]
-
-				if (note.id == currentNoteId) {
-					newArray.unshift({ ...note, body: text })
-				} else {
-					newArray.push(note)
-				}
-			}
-
-			return newArray
-		})
+	async function updateNote(text) {
+		const docRef = doc(db, 'notes', currentNoteId)
+		await setDoc(docRef, { body: text, updatedAt: Date.now() }, { merge: true })
 	}
 
 	async function deleteNote(noteID) {
@@ -47,6 +37,8 @@ export default function App() {
 		notes.find((note) => {
 			return note.id === currentNoteId
 		}) || notes[0]
+
+	const sortedNotes = notes.sort((a, b) => b.updatedAt - a.updatedAt)
 
 	useEffect(() => {
 		const unsubscribe = onSnapshot(notesCollection, (snapshot) => {
@@ -72,7 +64,7 @@ export default function App() {
 		<main>
 			{notes.length > 0 ? (
 				<Split sizes={[30, 70]} direction="horizontal" className="split">
-					<Sidebar notes={notes} currentNote={currentNote} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
+					<Sidebar notes={sortedNotes} currentNote={currentNote} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
 					<Editor currentNote={currentNote} updateNote={updateNote} />
 				</Split>
 			) : (
