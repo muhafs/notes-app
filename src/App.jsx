@@ -7,11 +7,12 @@ import { addDoc, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db, notesCollection } from './firebase'
 
 export default function App() {
+	//* States
 	const [notes, setNotes] = useState([])
 	const [currentNoteId, setCurrentNoteId] = useState('')
+	const [tempNoteText, setTempNoteText] = useState('')
 
-	console.log(currentNoteId)
-
+	//* Methods
 	async function createNewNote() {
 		const now = Date.now()
 		const newNote = {
@@ -33,6 +34,7 @@ export default function App() {
 		await deleteDoc(docRef)
 	}
 
+	//* Computed Methods
 	const currentNote =
 		notes.find((note) => {
 			return note.id === currentNoteId
@@ -40,6 +42,7 @@ export default function App() {
 
 	const sortedNotes = notes.sort((a, b) => b.updatedAt - a.updatedAt)
 
+	//* Side Effects
 	useEffect(() => {
 		const unsubscribe = onSnapshot(notesCollection, (snapshot) => {
 			const notesArr = snapshot.docs.map((doc) => ({
@@ -60,12 +63,29 @@ export default function App() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [notes])
 
+	useEffect(() => {
+		if (currentNote) {
+			setTempNoteText(currentNote.body)
+		}
+	}, [currentNote])
+
+	useEffect(() => {
+		const timeoutID = setTimeout(() => {
+			if (tempNoteText !== currentNote.body) {
+				updateNote(tempNoteText)
+			}
+		}, 500)
+
+		return () => clearTimeout(timeoutID)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tempNoteText])
+
 	return (
 		<main>
 			{notes.length > 0 ? (
 				<Split sizes={[30, 70]} direction="horizontal" className="split">
 					<Sidebar notes={sortedNotes} currentNote={currentNote} setCurrentNoteId={setCurrentNoteId} newNote={createNewNote} deleteNote={deleteNote} />
-					<Editor currentNote={currentNote} updateNote={updateNote} />
+					<Editor tempNoteText={tempNoteText} setTempNoteText={setTempNoteText} />
 				</Split>
 			) : (
 				<div className="no-notes">
